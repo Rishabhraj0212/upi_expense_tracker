@@ -47,9 +47,13 @@ class GenericUpiSmsParser implements TransactionParser {
   );
 
   /// Wording that means this is not a completed transaction: an OTP, a
-  /// promo, a pending due, a failed/declined attempt, etc.
+  /// promo, a pending due reminder, a failed/declined attempt, etc.
+  /// NOTE: bare "emi" and "due" were removed because they incorrectly
+  /// rejected completed auto-pay/EMI debit SMS. The more specific patterns
+  /// below still reject reminders/alerts without blocking real debits.
   static final RegExp _rejectRx = RegExp(
-    r'\b(?:otp|one time password|will be debited|due|emi|offer|cashback|'
+    r'\b(?:otp|one time password|will be debited|emi\s+(?:due|reminder|upcoming)'
+    r'|(?:payment|amount|emi)\s+due|offer|cashback|'
     r'lucky draw|win up to|failed|declined|requested|reminder|'
     r'expir(?:e|y|ing)|block(?:ed)? (?:your )?card)\b',
     caseSensitive: false,
@@ -99,6 +103,7 @@ class GenericUpiSmsParser implements TransactionParser {
       accountHint: TextExtractors.extractAccountHint(text),
       referenceId: TextExtractors.extractReferenceId(text),
       sourceAddress: event.origin,
+      balancePaise: TextExtractors.extractBalancePaise(text),
     );
   }
 

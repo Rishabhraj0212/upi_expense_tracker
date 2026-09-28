@@ -30,6 +30,10 @@ class Transactions extends Table {
   TextColumn get category => text().nullable()();
   TextColumn get note => text().nullable()();
 
+  /// Account balance extracted from the SMS (e.g. "Avl Bal Rs.12,345.00"),
+  /// stored in paise. Null when the SMS didn't contain balance info.
+  IntColumn get balancePaise => integer().nullable()();
+
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 

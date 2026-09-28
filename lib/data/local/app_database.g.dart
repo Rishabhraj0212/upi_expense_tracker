@@ -181,6 +181,17 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _balancePaiseMeta = const VerificationMeta(
+    'balancePaise',
+  );
+  @override
+  late final GeneratedColumn<int> balancePaise = GeneratedColumn<int>(
+    'balance_paise',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -266,6 +277,7 @@ class $TransactionsTable extends Transactions
     rawText,
     category,
     note,
+    balancePaise,
     createdAt,
     updatedAt,
     syncStatus,
@@ -400,6 +412,15 @@ class $TransactionsTable extends Transactions
         note.isAcceptableOrUnknown(data['note']!, _noteMeta),
       );
     }
+    if (data.containsKey('balance_paise')) {
+      context.handle(
+        _balancePaiseMeta,
+        balancePaise.isAcceptableOrUnknown(
+          data['balance_paise']!,
+          _balancePaiseMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -518,6 +539,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.string,
         data['${effectivePrefix}note'],
       ),
+      balancePaise: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}balance_paise'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -579,6 +604,10 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
   final String rawText;
   final String? category;
   final String? note;
+
+  /// Account balance extracted from the SMS (e.g. "Avl Bal Rs.12,345.00"),
+  /// stored in paise. Null when the SMS didn't contain balance info.
+  final int? balancePaise;
   final DateTime createdAt;
   final DateTime updatedAt;
   final TransactionSyncStatus syncStatus;
@@ -602,6 +631,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     required this.rawText,
     this.category,
     this.note,
+    this.balancePaise,
     required this.createdAt,
     required this.updatedAt,
     required this.syncStatus,
@@ -649,6 +679,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     }
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
+    }
+    if (!nullToAbsent || balancePaise != null) {
+      map['balance_paise'] = Variable<int>(balancePaise);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -703,6 +736,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           ? const Value.absent()
           : Value(category),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      balancePaise: balancePaise == null && nullToAbsent
+          ? const Value.absent()
+          : Value(balancePaise),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       syncStatus: Value(syncStatus),
@@ -742,6 +778,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       rawText: serializer.fromJson<String>(json['rawText']),
       category: serializer.fromJson<String?>(json['category']),
       note: serializer.fromJson<String?>(json['note']),
+      balancePaise: serializer.fromJson<int?>(json['balancePaise']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       syncStatus: $TransactionsTable.$convertersyncStatus.fromJson(
@@ -774,6 +811,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       'rawText': serializer.toJson<String>(rawText),
       'category': serializer.toJson<String?>(category),
       'note': serializer.toJson<String?>(note),
+      'balancePaise': serializer.toJson<int?>(balancePaise),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'syncStatus': serializer.toJson<String>(
@@ -802,6 +840,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     String? rawText,
     Value<String?> category = const Value.absent(),
     Value<String?> note = const Value.absent(),
+    Value<int?> balancePaise = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
     TransactionSyncStatus? syncStatus,
@@ -827,6 +866,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     rawText: rawText ?? this.rawText,
     category: category.present ? category.value : this.category,
     note: note.present ? note.value : this.note,
+    balancePaise: balancePaise.present ? balancePaise.value : this.balancePaise,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     syncStatus: syncStatus ?? this.syncStatus,
@@ -870,6 +910,9 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
       rawText: data.rawText.present ? data.rawText.value : this.rawText,
       category: data.category.present ? data.category.value : this.category,
       note: data.note.present ? data.note.value : this.note,
+      balancePaise: data.balancePaise.present
+          ? data.balancePaise.value
+          : this.balancePaise,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       syncStatus: data.syncStatus.present
@@ -906,6 +949,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           ..write('rawText: $rawText, ')
           ..write('category: $category, ')
           ..write('note: $note, ')
+          ..write('balancePaise: $balancePaise, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('syncStatus: $syncStatus, ')
@@ -934,6 +978,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
     rawText,
     category,
     note,
+    balancePaise,
     createdAt,
     updatedAt,
     syncStatus,
@@ -961,6 +1006,7 @@ class TransactionRow extends DataClass implements Insertable<TransactionRow> {
           other.rawText == this.rawText &&
           other.category == this.category &&
           other.note == this.note &&
+          other.balancePaise == this.balancePaise &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.syncStatus == this.syncStatus &&
@@ -986,6 +1032,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
   final Value<String> rawText;
   final Value<String?> category;
   final Value<String?> note;
+  final Value<int?> balancePaise;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<TransactionSyncStatus> syncStatus;
@@ -1009,6 +1056,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     this.rawText = const Value.absent(),
     this.category = const Value.absent(),
     this.note = const Value.absent(),
+    this.balancePaise = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -1033,6 +1081,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     required String rawText,
     this.category = const Value.absent(),
     this.note = const Value.absent(),
+    this.balancePaise = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     required TransactionSyncStatus syncStatus,
@@ -1065,6 +1114,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     Expression<String>? rawText,
     Expression<String>? category,
     Expression<String>? note,
+    Expression<int>? balancePaise,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<String>? syncStatus,
@@ -1089,6 +1139,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
       if (rawText != null) 'raw_text': rawText,
       if (category != null) 'category': category,
       if (note != null) 'note': note,
+      if (balancePaise != null) 'balance_paise': balancePaise,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (syncStatus != null) 'sync_status': syncStatus,
@@ -1115,6 +1166,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     Value<String>? rawText,
     Value<String?>? category,
     Value<String?>? note,
+    Value<int?>? balancePaise,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<TransactionSyncStatus>? syncStatus,
@@ -1139,6 +1191,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
       rawText: rawText ?? this.rawText,
       category: category ?? this.category,
       note: note ?? this.note,
+      balancePaise: balancePaise ?? this.balancePaise,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       syncStatus: syncStatus ?? this.syncStatus,
@@ -1201,6 +1254,9 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
     if (note.present) {
       map['note'] = Variable<String>(note.value);
     }
+    if (balancePaise.present) {
+      map['balance_paise'] = Variable<int>(balancePaise.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1243,6 +1299,7 @@ class TransactionsCompanion extends UpdateCompanion<TransactionRow> {
           ..write('rawText: $rawText, ')
           ..write('category: $category, ')
           ..write('note: $note, ')
+          ..write('balancePaise: $balancePaise, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('syncStatus: $syncStatus, ')
@@ -3106,6 +3163,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required String rawText,
       Value<String?> category,
       Value<String?> note,
+      Value<int?> balancePaise,
       required DateTime createdAt,
       required DateTime updatedAt,
       required TransactionSyncStatus syncStatus,
@@ -3131,6 +3189,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String> rawText,
       Value<String?> category,
       Value<String?> note,
+      Value<int?> balancePaise,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<TransactionSyncStatus> syncStatus,
@@ -3226,6 +3285,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<String> get note => $composableBuilder(
     column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get balancePaise => $composableBuilder(
+    column: $table.balancePaise,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3354,6 +3418,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get balancePaise => $composableBuilder(
+    column: $table.balancePaise,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -3458,6 +3527,11 @@ class $$TransactionsTableAnnotationComposer
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
 
+  GeneratedColumn<int> get balancePaise => $composableBuilder(
+    column: $table.balancePaise,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -3533,6 +3607,7 @@ class $$TransactionsTableTableManager
                 Value<String> rawText = const Value.absent(),
                 Value<String?> category = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<int?> balancePaise = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<TransactionSyncStatus> syncStatus = const Value.absent(),
@@ -3556,6 +3631,7 @@ class $$TransactionsTableTableManager
                 rawText: rawText,
                 category: category,
                 note: note,
+                balancePaise: balancePaise,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 syncStatus: syncStatus,
@@ -3581,6 +3657,7 @@ class $$TransactionsTableTableManager
                 required String rawText,
                 Value<String?> category = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<int?> balancePaise = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 required TransactionSyncStatus syncStatus,
@@ -3604,6 +3681,7 @@ class $$TransactionsTableTableManager
                 rawText: rawText,
                 category: category,
                 note: note,
+                balancePaise: balancePaise,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 syncStatus: syncStatus,

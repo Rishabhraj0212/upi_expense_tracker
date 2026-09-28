@@ -52,6 +52,23 @@ class TextExtractors {
 
   static String? extractAccountHint(String text) => _acctRx.firstMatch(text)?.group(1)?.toUpperCase();
 
+  /// Extracts the account balance from text — the complement of
+  /// [extractAmountPaise]. Returns the first Rs/INR/₹ amount that IS
+  /// preceded by balance wording (e.g. "Avl Bal Rs.12,345.00"), in paise.
+  static int? extractBalancePaise(String text) {
+    for (final m in _amountRx.allMatches(text)) {
+      final lookbackStart = (m.start - 20).clamp(0, text.length);
+      final before = text.substring(lookbackStart, m.start);
+      if (!_balanceContextRx.hasMatch(before)) continue;
+
+      final raw = m.group(1)!.replaceAll(',', '');
+      final value = double.tryParse(raw);
+      if (value == null || value < 0) continue;
+      return (value * 100).round();
+    }
+    return null;
+  }
+
   /// Drops a captured name if it's just a truncated prefix of the VPA
   /// (regex name-matching stops at '@', so "from shop@upi" can otherwise
   /// yield the useless partial name "shop").

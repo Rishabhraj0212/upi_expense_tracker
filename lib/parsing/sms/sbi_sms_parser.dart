@@ -63,6 +63,7 @@ class SbiSmsParser implements TransactionParser {
       accountHint: TextExtractors.extractAccountHint(text),
       referenceId: _refRx.firstMatch(text)?.group(1),
       sourceAddress: event.origin,
+      balancePaise: TextExtractors.extractBalancePaise(text),
     );
   }
 

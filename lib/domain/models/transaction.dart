@@ -22,6 +22,7 @@ class Transaction {
     this.sourceAddress,
     this.category,
     this.note,
+    this.balancePaise,
     this.syncStatus = TransactionSyncStatus.pending,
     this.lastSyncedAt,
     this.remoteRowRef,
@@ -52,6 +53,10 @@ class Transaction {
   /// Reserved for a future phase; unused by Phase 1 UI.
   final String? category;
   final String? note;
+
+  /// Account balance reported in the SMS (e.g. "Avl Bal Rs.12,345.00"),
+  /// in paise. Null if the message didn't include balance info.
+  final int? balancePaise;
 
   final DateTime createdAt;
   final DateTime updatedAt;

@@ -33,6 +33,7 @@ class DriftTransactionRepository implements TransactionRepository {
             referenceId: Value(parsed.referenceId),
             sourceApp: Value(parsed.sourceApp),
             sourceAddress: Value(parsed.sourceAddress),
+            balancePaise: Value(parsed.balancePaise),
           ),
         );
   }
@@ -67,6 +68,7 @@ class DriftTransactionRepository implements TransactionRepository {
         referenceId: Value(existing.referenceId ?? parsed.referenceId),
         sourceApp: Value(existing.sourceApp ?? parsed.sourceApp),
         sourceAddress: Value(existing.sourceAddress ?? parsed.sourceAddress),
+        balancePaise: Value(parsed.balancePaise ?? existing.balancePaise),
         mergedSources: Value(sources.join(',')),
         updatedAt: Value(DateTime.now()),
       ),
@@ -281,6 +283,7 @@ class DriftTransactionRepository implements TransactionRepository {
         rawText: row.rawText,
         category: row.category,
         note: row.note,
+        balancePaise: row.balancePaise,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         syncStatus: row.syncStatus,

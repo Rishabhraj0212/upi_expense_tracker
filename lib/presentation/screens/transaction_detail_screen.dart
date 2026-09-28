@@ -104,22 +104,26 @@ class TransactionDetailScreen extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Category', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.primary)),
-                      const SizedBox(height: 4),
-                      Text(
-                        transaction.category ?? 'Uncategorized',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontStyle: transaction.category == null ? FontStyle.italic : FontStyle.normal,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Category', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.primary)),
+                        const SizedBox(height: 4),
+                        Text(
+                          transaction.category ?? 'Uncategorized',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontStyle: transaction.category == null ? FontStyle.italic : FontStyle.normal,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   OutlinedButton(
                     onPressed: () => _changeCategory(context, ref),
-                    child: const Text('Change Category'),
+                    child: const Text('Change'),
                   ),
                 ],
               ),
@@ -142,6 +146,8 @@ class TransactionDetailScreen extends ConsumerWidget {
                 if (transaction.sourceApp != null) _DetailRow(label: 'App', value: transaction.sourceApp!),
                 if (transaction.sourceAddress != null)
                   _DetailRow(label: 'SMS sender', value: transaction.sourceAddress!),
+                if (transaction.balancePaise != null)
+                  _DetailRow(label: 'Balance after', value: Fmt.rupees(transaction.balancePaise!)),
               ],
             ),
           ),

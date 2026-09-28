@@ -29,7 +29,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -84,6 +84,11 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(expenseCategories);
             await m.createTable(categoryRules);
             await _seedDefaultCategories();
+          }
+          if (from < 5) {
+            await customStatement(
+              'ALTER TABLE transactions ADD COLUMN balance_paise INTEGER',
+            );
           }
         },
       );

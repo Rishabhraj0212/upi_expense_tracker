@@ -1,9 +1,10 @@
 import '../../domain/models/transaction.dart' as domain;
 import '../../domain/models/transaction_type.dart';
 
-typedef TransactionTotals = ({int debitPaise, int creditPaise});
+typedef TransactionTotals = ({int debitPaise, int creditPaise, int netBalancePaise});
 
-/// Pure and unit-testable: sums debit and credit amounts separately.
+/// Pure and unit-testable: sums debit and credit amounts separately,
+/// and computes the net balance (credit − debit).
 TransactionTotals computeTransactionTotals(List<domain.Transaction> transactions) {
   var debit = 0;
   var credit = 0;
@@ -14,5 +15,5 @@ TransactionTotals computeTransactionTotals(List<domain.Transaction> transactions
       credit += t.amountPaise;
     }
   }
-  return (debitPaise: debit, creditPaise: credit);
+  return (debitPaise: debit, creditPaise: credit, netBalancePaise: credit - debit);
 }

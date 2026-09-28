@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/transaction.dart' as domain;
+import '../../format.dart';
 import '../providers/app_providers.dart';
 import '../utils/transaction_totals.dart';
 import '../widgets/summary_card.dart';
@@ -65,6 +66,13 @@ class _DashboardBody extends StatelessWidget {
     final totals = computeTransactionTotals(transactions);
     final recent = transactions.take(_recentPreviewCount).toList();
 
+    // transactions are sorted by occurredAt DESC — the first one with
+    // a non-null balancePaise is the most recent known bank balance.
+    final latestBalanceTx = transactions.cast<domain.Transaction?>().firstWhere(
+          (tx) => tx!.balancePaise != null,
+          orElse: () => null,
+        );
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -75,6 +83,8 @@ class _DashboardBody extends StatelessWidget {
             SummaryCard(label: 'Total Credit', amountPaise: totals.creditPaise, color: Colors.green),
           ],
         ),
+        const SizedBox(height: 12),
+        _BalanceCard(balanceTx: latestBalanceTx),
         const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -102,6 +112,87 @@ class _DashboardBody extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Full-width card showing the latest known account balance extracted from
+/// an SMS. Displays bank name, amount, and when the balance was last seen.
+class _BalanceCard extends StatelessWidget {
+  const _BalanceCard({required this.balanceTx});
+
+  final domain.Transaction? balanceTx;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (balanceTx == null) {
+      return Card(
+        color: Colors.grey.withValues(alpha: 0.1),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          child: Row(
+            children: [
+              Icon(Icons.account_balance_wallet, color: Colors.grey.shade400),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Account Balance', style: theme.textTheme.labelLarge),
+                    const SizedBox(height: 2),
+                    Text(
+                      'No balance info found in SMS yet',
+                      style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+              Text('—', style: theme.textTheme.headlineSmall?.copyWith(color: Colors.grey)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final tx = balanceTx!;
+    final bankLabel = tx.bankName ?? 'Bank';
+    final acctHint = tx.accountHint != null ? ' (${tx.accountHint})' : '';
+
+    return Card(
+      color: Colors.blue.withValues(alpha: 0.1),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        child: Row(
+          children: [
+            Icon(Icons.account_balance_wallet, color: Colors.blue.shade600),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Account Balance', style: theme.textTheme.labelLarge),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$bankLabel$acctHint • ${Fmt.dayTime(tx.occurredAt)}',
+                    style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              Fmt.rupees(tx.balancePaise!),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: Colors.blue.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

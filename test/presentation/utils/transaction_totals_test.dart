@@ -28,6 +28,7 @@ void main() {
 
     expect(totals.debitPaise, 15000);
     expect(totals.creditPaise, 20000);
+    expect(totals.netBalancePaise, 5000);
   });
 
   test('returns zero totals for an empty list', () {
@@ -35,5 +36,6 @@ void main() {
 
     expect(totals.debitPaise, 0);
     expect(totals.creditPaise, 0);
+    expect(totals.netBalancePaise, 0);
   });
 }
