@@ -119,4 +119,22 @@ class FakeSheetsApiClient implements SheetsApiClient {
     }
     return null;
   }
+
+  int fetchAllRowsCalls = 0;
+  SheetAllRowsResult? forcedFetchAllRowsResult;
+
+  @override
+  Future<SheetAllRowsResult> fetchAllRows(String accessToken, String spreadsheetId) async {
+    fetchAllRowsCalls++;
+    if (forcedFetchAllRowsResult != null) return forcedFetchAllRowsResult!;
+    // Data rows start at index 1 (index 0 is the header, if present).
+    final start = _hasHeader ? 1 : 0;
+    final dataRows = rows.sublist(start).map((row) {
+      final strings = row.map((c) => c?.toString() ?? '').toList();
+      while (strings.length < 10) strings.add('');
+      return strings;
+    }).toList();
+    return SheetAllRowsLoaded(dataRows);
+  }
 }
+
