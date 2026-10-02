@@ -1,4 +1,8 @@
 const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const _fullMonths = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
 
 class Fmt {
   /// 125050 -> "₹1,250.50" (Indian digit grouping, paise hidden when zero).
@@ -21,6 +25,7 @@ class Fmt {
   }
 
   static String monthYear(DateTime d) => '${_months[d.month - 1]} ${d.year}';
+  static String fullMonthYear(DateTime d) => '${_fullMonths[d.month - 1]} ${d.year}';
 
   static String dayTime(DateTime d) {
     final local = d.toLocal();

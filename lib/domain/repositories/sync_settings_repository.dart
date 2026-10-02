@@ -25,4 +25,6 @@ abstract class SyncSettingsRepository {
   Future<void> setLastSuccessfulSync(DateTime at);
 
   Future<void> setSyncRunState(SyncRunState state);
+
+  Future<void> setLastSmsRescanAt(DateTime at);
 }

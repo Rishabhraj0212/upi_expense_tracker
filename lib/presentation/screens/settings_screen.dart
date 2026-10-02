@@ -7,9 +7,14 @@ import '../../domain/models/sync_status.dart';
 import '../../domain/repositories/transaction_repository.dart';
 import '../../format.dart';
 import '../../sync/transaction_sync_service.dart';
+import '../providers/app_providers.dart';
+import '../providers/initial_balance_provider.dart';
 import '../providers/sync_providers.dart';
 import 'categories_settings_screen.dart';
 import 'google_sheets_setup_screen.dart';
+import 'sheet_restore_screen.dart';
+import 'sms_rescan_screen.dart';
+
 
 /// Settings -> Google Sheets Sync. Deliberately separate from [SetupScreen],
 /// which stays focused on SMS/notification permissions.
@@ -32,6 +37,16 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         children: [
           ListTile(
+            leading: const Icon(Icons.search),
+            title: const Text('Find Missed Transactions'),
+            subtitle: const Text('Scan previous bank SMS for missed payments'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SmsRescanScreen()));
+            },
+          ),
+          const Divider(),
+          ListTile(
             leading: const Icon(Icons.category_outlined),
             title: const Text('Categories'),
             subtitle: const Text('Manage custom expense categories'),
@@ -39,6 +54,14 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () {
               Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CategoriesSettingsScreen()));
             },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.account_balance_wallet_outlined),
+            title: const Text('Starting Balance'),
+            subtitle: const Text('Set your initial bank balance before tracking started'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _showInitialBalanceDialog(context, ref),
           ),
           const Divider(),
           settingsAsync.when(
@@ -52,9 +75,72 @@ class SettingsScreen extends ConsumerWidget {
               child: Text('Could not load settings: $e'),
             ),
           ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.delete_forever, color: Colors.red),
+            title: const Text('Clear All Data', style: TextStyle(color: Colors.red)),
+            subtitle: const Text('Delete all transactions and reset app data'),
+            onTap: () => _showClearDataDialog(context, ref),
+          ),
+          const SizedBox(height: 32),
         ],
       ),
     );
+  }
+
+  Future<void> _showClearDataDialog(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear All Data?'),
+        content: const Text(
+          'This will permanently delete all transactions and raw captures from your device. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete All'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(transactionRepositoryProvider).clearAllData();
+      await ref.read(initialBalanceProvider.notifier).setBalance(0);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All data cleared.')));
+      }
+    }
+  }
+
+  Future<void> _showInitialBalanceDialog(BuildContext context, WidgetRef ref) async {
+    final current = ref.read(initialBalanceProvider);
+    final controller = TextEditingController(text: current > 0 ? (current / 100).toStringAsFixed(2) : '');
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Starting Balance'),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'Amount',
+            prefixText: '₹ ',
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Save')),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      final parsed = double.tryParse(controller.text) ?? 0.0;
+      final paise = (parsed * 100).round();
+      await ref.read(initialBalanceProvider.notifier).setBalance(paise);
+    }
   }
 }
 
@@ -315,6 +401,24 @@ class _ConnectedPanelState extends ConsumerState<_ConnectedPanel> {
                   child: OutlinedButton(
                     onPressed: _syncing ? null : _syncNow,
                     child: Text(_needsRetry ? 'Retry Sync' : 'Sync Now'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _syncing
+                        ? null
+                        : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const SheetRestoreScreen(),
+                              ),
+                            ),
+                    icon: const Icon(Icons.cloud_download_outlined, size: 18),
+                    label: const Text('Restore from Sheet'),
                   ),
                 ),
               ],

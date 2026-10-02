@@ -2,8 +2,10 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:upi_expense_tracker/data/local/app_database.dart';
 import 'package:upi_expense_tracker/presentation/providers/app_providers.dart';
+import 'package:upi_expense_tracker/presentation/providers/initial_balance_provider.dart';
 
 AppDatabase newInMemoryTestDatabase() => AppDatabase.forTesting(NativeDatabase.memory());
 
@@ -27,8 +29,15 @@ Future<void> pumpDriftScreen(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 
+  SharedPreferences.setMockInitialValues({});
+  final prefs = await SharedPreferences.getInstance();
+
   await tester.pumpWidget(ProviderScope(
-    overrides: [appDatabaseProvider.overrideWithValue(db), ...extraOverrides],
+    overrides: [
+      appDatabaseProvider.overrideWithValue(db),
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      ...extraOverrides
+    ],
     child: MaterialApp(home: child),
   ));
   await tester.pumpAndSettle();

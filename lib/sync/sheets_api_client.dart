@@ -55,6 +55,30 @@ class RowIndexFailure extends RowIndexResult {
   final String reason;
 }
 
+// ---------------------------------------------------------------------------
+// fetchAllRows result types
+// ---------------------------------------------------------------------------
+
+/// A single data row read back from the sheet, column-indexed by the
+/// [transactionSheetHeaders] order (A=0 … J=9).
+typedef SheetRow = List<String>;
+
+sealed class SheetAllRowsResult {
+  const SheetAllRowsResult();
+}
+
+class SheetAllRowsLoaded extends SheetAllRowsResult {
+  const SheetAllRowsLoaded(this.rows);
+
+  /// Data rows only (header row is excluded). May be empty.
+  final List<SheetRow> rows;
+}
+
+class SheetAllRowsFailure extends SheetAllRowsResult {
+  const SheetAllRowsFailure(this.reason);
+  final String reason;
+}
+
 /// Talks to the Google Sheets API (`sheets.googleapis.com`) using a
 /// short-lived access token the caller already obtained via
 /// [DriveAuthorizationGateway]. Implementations must never persist or log
@@ -83,4 +107,8 @@ abstract class SheetsApiClient {
   /// Appends a brand-new row; the returned [SheetWriteSuccess.rowNumber] is
   /// whatever row Sheets actually assigned it.
   Future<SheetWriteResult> appendRow(String accessToken, String spreadsheetId, {required List<Object?> values});
+
+  /// Reads every data row (skipping the header) from the connected sheet.
+  /// Used by the restore/import flow to pull existing data back into the app.
+  Future<SheetAllRowsResult> fetchAllRows(String accessToken, String spreadsheetId);
 }

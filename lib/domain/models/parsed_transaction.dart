@@ -18,6 +18,7 @@ class ParsedTransaction {
     this.sourceApp,
     this.sourceAddress,
     this.balancePaise,
+    this.note,
   });
 
   final int amountPaise;
@@ -42,4 +43,7 @@ class ParsedTransaction {
   /// Account balance reported in the SMS (e.g. "Avl Bal Rs.12,345.00"),
   /// in paise. Null if the message doesn't include balance info.
   final int? balancePaise;
+
+  /// Optional remark, note, or purpose of payment extracted from notification/SMS.
+  final String? note;
 }

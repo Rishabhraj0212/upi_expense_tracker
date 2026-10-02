@@ -6,6 +6,8 @@ import '../../domain/models/sync_status.dart';
 import '../../sync/google_auth_gateway.dart';
 import '../../sync/spreadsheet_connection_service.dart';
 import '../providers/sync_providers.dart';
+import 'sheet_restore_screen.dart';
+
 
 /// The "Yes, Sync with Google Sheets" destination — both from first launch
 /// and from Settings' "Connect Google Sheets" action later. Shows the
@@ -86,12 +88,16 @@ class _GoogleSheetsSetupScreenState extends ConsumerState<GoogleSheetsSetupScree
   }
 
   Future<void> _createNewSheet() =>
-      _connectSheet(() => ref.read(spreadsheetConnectionServiceProvider).createNewSheet());
+      _connectSheet(() => ref.read(spreadsheetConnectionServiceProvider).createNewSheet(), isExisting: false);
 
   Future<void> _selectExistingSheet() =>
-      _connectSheet(() => ref.read(spreadsheetConnectionServiceProvider).selectExistingSheet());
+      _connectSheet(() => ref.read(spreadsheetConnectionServiceProvider).selectExistingSheet(), isExisting: true);
 
-  Future<void> _connectSheet(Future<SpreadsheetConnectionOutcome> Function() run) async {
+  Future<void> _connectSheet(
+    Future<SpreadsheetConnectionOutcome> Function() run, {
+    required bool isExisting,
+  }) async {
+
     // Diagnostic only (temporary): confirms which account google_sign_in
     // currently reports as signed in at the exact moment authorization is
     // triggered, so it can be compared against the Cloud project's
@@ -123,10 +129,15 @@ class _GoogleSheetsSetupScreenState extends ConsumerState<GoogleSheetsSetupScree
     debugPrint('[SheetSync] GoogleSheetsSetupScreen._connectSheet: outcome=${outcome.runtimeType}');
     switch (outcome) {
       case SpreadsheetConnectionSuccess():
-        // No manual navigation to the dashboard: AppStartupGate (or the
-        // Settings screen this was pushed from) reacts to connectionState
-        // becoming connected on its own.
-        Navigator.of(context).maybePop();
+        if (isExisting && mounted) {
+          // Navigate to the restore screen so the user can import their old data.
+          await Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const SheetRestoreScreen()),
+          );
+        } else {
+          // New sheet — nothing to restore; let AppStartupGate take over.
+          Navigator.of(context).maybePop();
+        }
       case SpreadsheetConnectionCancelled():
         break;
       case SpreadsheetConnectionFailure(:final message):

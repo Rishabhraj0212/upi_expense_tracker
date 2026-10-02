@@ -29,7 +29,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -88,6 +88,11 @@ class AppDatabase extends _$AppDatabase {
           if (from < 5) {
             await customStatement(
               'ALTER TABLE transactions ADD COLUMN balance_paise INTEGER',
+            );
+          }
+          if (from >= 2 && from < 6) {
+            await customStatement(
+              'ALTER TABLE sync_settings ADD COLUMN last_sms_rescan_at INTEGER',
             );
           }
         },

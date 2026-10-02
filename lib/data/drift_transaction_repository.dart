@@ -34,6 +34,7 @@ class DriftTransactionRepository implements TransactionRepository {
             sourceApp: Value(parsed.sourceApp),
             sourceAddress: Value(parsed.sourceAddress),
             balancePaise: Value(parsed.balancePaise),
+            note: Value(parsed.note),
           ),
         );
   }
@@ -69,6 +70,7 @@ class DriftTransactionRepository implements TransactionRepository {
         sourceApp: Value(existing.sourceApp ?? parsed.sourceApp),
         sourceAddress: Value(existing.sourceAddress ?? parsed.sourceAddress),
         balancePaise: Value(parsed.balancePaise ?? existing.balancePaise),
+        note: Value(existing.note ?? parsed.note),
         mergedSources: Value(sources.join(',')),
         updatedAt: Value(DateTime.now()),
       ),
@@ -103,7 +105,10 @@ class DriftTransactionRepository implements TransactionRepository {
   @override
   Future<List<domain.Transaction>> getAll({TransactionFilter filter = TransactionFilter.none, int limit = 500}) async {
     final rows = await (_buildFilteredQuery(filter)
-          ..orderBy([(t) => OrderingTerm.desc(t.occurredAt)])
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.occurredAt),
+            (t) => OrderingTerm.desc(t.id),
+          ])
           ..limit(limit))
         .get();
     return rows.map(_toDomain).toList();
@@ -112,35 +117,95 @@ class DriftTransactionRepository implements TransactionRepository {
   @override
   Stream<List<domain.Transaction>> watchAll({TransactionFilter filter = TransactionFilter.none, int limit = 500}) {
     return (_buildFilteredQuery(filter)
-          ..orderBy([(t) => OrderingTerm.desc(t.occurredAt)])
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.occurredAt),
+            (t) => OrderingTerm.desc(t.id),
+          ])
           ..limit(limit))
         .watch()
         .map((rows) => rows.map(_toDomain).toList());
   }
 
-  SimpleSelectStatement<$TransactionsTable, TransactionRow> _buildFilteredQuery(TransactionFilter filter) {
-    final query = _db.select(_db.transactions);
+  Expression<bool> _buildWhereClause(TransactionFilter filter) {
+    Expression<bool> predicate = const Constant(true);
+    final t = _db.transactions;
     if (filter.type != null) {
-      query.where((t) => t.type.equalsValue(filter.type!));
+      predicate = predicate & t.type.equalsValue(filter.type!);
     }
     if (filter.from != null) {
-      query.where((t) => t.occurredAt.isBiggerOrEqualValue(filter.from!));
+      predicate = predicate & t.occurredAt.isBiggerOrEqualValue(filter.from!);
     }
     if (filter.to != null) {
-      query.where((t) => t.occurredAt.isSmallerOrEqualValue(filter.to!));
+      predicate = predicate & t.occurredAt.isSmallerOrEqualValue(filter.to!);
     }
     if (filter.searchText != null && filter.searchText!.trim().isNotEmpty) {
       final needle = '%${filter.searchText!.trim()}%';
-      query.where((t) => t.merchantName.like(needle) | t.upiId.like(needle) | t.rawText.like(needle));
+      predicate = predicate & (t.merchantName.like(needle) | t.upiId.like(needle) | t.rawText.like(needle));
     }
     if (filter.category != null) {
       if (filter.category == 'Uncategorized') {
-        query.where((t) => t.category.isNull());
+        predicate = predicate & t.category.isNull();
       } else {
-        query.where((t) => t.category.equals(filter.category!));
+        predicate = predicate & t.category.equals(filter.category!);
       }
     }
-    return query;
+    return predicate;
+  }
+
+  SimpleSelectStatement<$TransactionsTable, TransactionRow> _buildFilteredQuery(TransactionFilter filter) {
+    return _db.select(_db.transactions)..where((t) => _buildWhereClause(filter));
+  }
+
+  @override
+  Future<int> getTotalAmount(TransactionFilter filter) async {
+    final amountExpr = _db.transactions.amountPaise.sum();
+    final query = _db.selectOnly(_db.transactions)
+      ..addColumns([amountExpr])
+      ..where(_buildWhereClause(filter));
+    final row = await query.getSingle();
+    return row.read(amountExpr) ?? 0;
+  }
+
+  @override
+  Future<int> getTransactionCount(TransactionFilter filter) async {
+    final countExpr = _db.transactions.id.count();
+    final query = _db.selectOnly(_db.transactions)
+      ..addColumns([countExpr])
+      ..where(_buildWhereClause(filter));
+    final row = await query.getSingle();
+    return row.read(countExpr) ?? 0;
+  }
+
+  @override
+  Future<List<MapEntry<String, int>>> getTopCategories(TransactionFilter filter, {int limit = 5}) async {
+    final amountExpr = _db.transactions.amountPaise.sum();
+    final categoryExpr = _db.transactions.category;
+    final query = _db.selectOnly(_db.transactions)
+      ..addColumns([categoryExpr, amountExpr])
+      ..where(_buildWhereClause(filter))
+      ..groupBy([categoryExpr])
+      ..orderBy([OrderingTerm.desc(amountExpr)])
+      ..limit(limit);
+    final rows = await query.get();
+    return rows
+        .map((r) => MapEntry(r.read(categoryExpr) ?? 'Uncategorized', r.read(amountExpr) ?? 0))
+        .toList();
+  }
+
+  @override
+  Future<List<MapEntry<String, int>>> getTopMerchants(TransactionFilter filter, {int limit = 5}) async {
+    final amountExpr = _db.transactions.amountPaise.sum();
+    final merchantExpr = _db.transactions.merchantName;
+    final query = _db.selectOnly(_db.transactions)
+      ..addColumns([merchantExpr, amountExpr])
+      ..where(_buildWhereClause(filter))
+      ..groupBy([merchantExpr])
+      ..orderBy([OrderingTerm.desc(amountExpr)])
+      ..limit(limit);
+    final rows = await query.get();
+    return rows
+        .map((r) => MapEntry(r.read(merchantExpr) ?? 'Unknown', r.read(amountExpr) ?? 0))
+        .toList();
   }
 
   @override
@@ -159,6 +224,12 @@ class DriftTransactionRepository implements TransactionRepository {
   @override
   Future<void> delete(int id) async {
     await (_db.delete(_db.transactions)..where((t) => t.id.equals(id))).go();
+  }
+
+  @override
+  Future<void> clearAllData() async {
+    await _db.delete(_db.transactions).go();
+    await _db.delete(_db.rawCaptures).go();
   }
 
   @override

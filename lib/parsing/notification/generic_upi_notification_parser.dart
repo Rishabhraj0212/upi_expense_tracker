@@ -30,12 +30,12 @@ class GenericUpiNotificationParser implements TransactionParser {
   );
 
   static final RegExp _toRx = RegExp(
-    r'\bto\s+([^\n.!,(]{2,40}?)(?=\s+(?:on|via|using|from|with|successfully|ref|utr|rrn)\b|[.!,(\n]|$)',
+    r'\bto\s+([^\n.!,(]{2,40}?)(?=\s+(?:on|via|using|from|with|for|note|remark|successfully|ref|utr|rrn)\b|[.!,(\n]|$)',
     caseSensitive: false,
   );
 
   static final RegExp _fromRx = RegExp(
-    r'\bfrom\s+([^\n.!,(]{2,40}?)(?=\s+(?:on|via|using|with|successfully|ref|utr|rrn)\b|[.!,(\n]|$)',
+    r'\bfrom\s+([^\n.!,(]{2,40}?)(?=\s+(?:on|via|using|with|for|note|remark|successfully|ref|utr|rrn)\b|[.!,(\n]|$)',
     caseSensitive: false,
   );
 
@@ -69,6 +69,7 @@ class GenericUpiNotificationParser implements TransactionParser {
       upiId: vpa,
       referenceId: TextExtractors.extractReferenceId(text),
       sourceApp: upiNotificationApps[event.origin],
+      note: TextExtractors.extractNote(text),
     );
   }
 }

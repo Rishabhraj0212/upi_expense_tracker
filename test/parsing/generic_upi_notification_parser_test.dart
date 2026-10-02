@@ -80,4 +80,34 @@ void main() {
     final event = notif('₹100 paid to someone', origin: 'com.whatsapp');
     expect(parser.canHandle(event), isFalse);
   });
+
+  test('extracts note from Paytm notification with explicit Note prefix', () {
+    final event = notif(
+      'Payment successful | ₹150 paid to Sharma Store. Note: Snacks and tea',
+      origin: 'net.one97.paytm',
+    );
+
+    final result = parser.tryParse(event);
+
+    expect(result, isNotNull);
+    expect(result!.amountPaise, 15000);
+    expect(result.merchantName, 'Sharma Store');
+    expect(result.sourceApp, 'Paytm');
+    expect(result.note, 'Snacks and tea');
+  });
+
+  test('extracts note from notification with for <purpose>', () {
+    final event = notif(
+      'Payment successful | ₹500 paid to Ramesh for Groceries',
+      origin: 'net.one97.paytm',
+    );
+
+    final result = parser.tryParse(event);
+
+    expect(result, isNotNull);
+    expect(result!.amountPaise, 50000);
+    expect(result.merchantName, 'Ramesh');
+    expect(result.sourceApp, 'Paytm');
+    expect(result.note, 'Groceries');
+  });
 }

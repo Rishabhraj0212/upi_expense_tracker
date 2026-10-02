@@ -219,4 +219,34 @@ class HttpSheetsApiClient implements SheetsApiClient {
     'Authorization': 'Bearer $accessToken',
     'Content-Type': 'application/json',
   };
+
+  @override
+  Future<SheetAllRowsResult> fetchAllRows(String accessToken, String spreadsheetId) async {
+    final lastColumn = _columnLetter(10); // 10 columns (A-J)
+    try {
+      final response = await _client.get(
+        Uri.parse('$_baseUrl/$spreadsheetId/values/$_sheetName!A2:$lastColumn'),
+        headers: _headers(accessToken),
+      );
+      debugPrint('[SheetSync] HttpSheetsApiClient.fetchAllRows: HTTP ${response.statusCode}');
+      if (response.statusCode != 200) {
+        return SheetAllRowsFailure('Could not read sheet rows (HTTP ${response.statusCode}).');
+      }
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final rawRows = body['values'] as List<dynamic>? ?? const [];
+      final rows = rawRows.map((r) {
+        final row = r as List<dynamic>;
+        // Pad short rows to 10 columns so column indices are always safe.
+        final strings = row.map((c) => c?.toString() ?? '').toList();
+        while (strings.length < 10) {
+          strings.add('');
+        }
+        return strings;
+      }).toList();
+      return SheetAllRowsLoaded(rows);
+    } catch (e) {
+      debugPrint('[SheetSync] HttpSheetsApiClient.fetchAllRows: ${e.runtimeType}: $e');
+      return SheetAllRowsFailure('Network error while reading sheet rows: $e');
+    }
+  }
 }

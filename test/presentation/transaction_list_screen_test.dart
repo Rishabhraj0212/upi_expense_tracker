@@ -138,4 +138,53 @@ void main() {
 
     await disposeAndFlushDriftTimer(tester);
   });
+
+  testWidgets('monthly filter filters transactions by month', (tester) async {
+    final db = newInMemoryTestDatabase();
+    addTearDown(db.close);
+    final repo = DriftTransactionRepository(db);
+
+    // January 2026 transaction
+    await repo.insert(_parsed(
+      amountPaise: 10000,
+      type: TransactionType.debit,
+      occurredAt: DateTime(2026, 1, 15),
+      merchantName: 'January Merchant',
+    ));
+    // February 2026 transaction
+    await repo.insert(_parsed(
+      amountPaise: 20000,
+      type: TransactionType.credit,
+      occurredAt: DateTime(2026, 2, 10),
+      merchantName: 'February Merchant',
+    ));
+
+    await pumpDriftScreen(tester, db, const TransactionListScreen());
+
+    // Both should be visible initially (All Months)
+    expect(find.text('January Merchant'), findsOneWidget);
+    expect(find.text('February Merchant'), findsOneWidget);
+
+    // Tap month selector to open month picker
+    await tester.tap(find.text('All Months'));
+    await tester.pumpAndSettle();
+
+    // Select January 2026
+    await tester.tap(find.text('January 2026'));
+    await tester.pumpAndSettle();
+
+    // Only January should be visible
+    expect(find.text('January Merchant'), findsOneWidget);
+    expect(find.text('February Merchant'), findsNothing);
+
+    // Reset back to All Time
+    await tester.tap(find.text('All Time'));
+    await tester.pumpAndSettle();
+
+    // Both should be visible again
+    expect(find.text('January Merchant'), findsOneWidget);
+    expect(find.text('February Merchant'), findsOneWidget);
+
+    await disposeAndFlushDriftTimer(tester);
+  });
 }

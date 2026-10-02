@@ -1816,6 +1816,18 @@ class $SyncSettingsTableTable extends SyncSettingsTable
       ).withConverter<SyncRunState>(
         $SyncSettingsTableTable.$converterlastSyncRunState,
       );
+  static const VerificationMeta _lastSmsRescanAtMeta = const VerificationMeta(
+    'lastSmsRescanAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastSmsRescanAt =
+      GeneratedColumn<DateTime>(
+        'last_sms_rescan_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1827,6 +1839,7 @@ class $SyncSettingsTableTable extends SyncSettingsTable
     autoSyncEnabled,
     lastSuccessfulSyncAt,
     lastSyncRunState,
+    lastSmsRescanAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1890,6 +1903,15 @@ class $SyncSettingsTableTable extends SyncSettingsTable
         ),
       );
     }
+    if (data.containsKey('last_sms_rescan_at')) {
+      context.handle(
+        _lastSmsRescanAtMeta,
+        lastSmsRescanAt.isAcceptableOrUnknown(
+          data['last_sms_rescan_at']!,
+          _lastSmsRescanAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1943,6 +1965,10 @@ class $SyncSettingsTableTable extends SyncSettingsTable
               data['${effectivePrefix}last_sync_run_state'],
             )!,
           ),
+      lastSmsRescanAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_sms_rescan_at'],
+      ),
     );
   }
 
@@ -1975,6 +2001,7 @@ class SyncSettingsRow extends DataClass implements Insertable<SyncSettingsRow> {
   final bool autoSyncEnabled;
   final DateTime? lastSuccessfulSyncAt;
   final SyncRunState lastSyncRunState;
+  final DateTime? lastSmsRescanAt;
   const SyncSettingsRow({
     required this.id,
     required this.syncPreference,
@@ -1985,6 +2012,7 @@ class SyncSettingsRow extends DataClass implements Insertable<SyncSettingsRow> {
     required this.autoSyncEnabled,
     this.lastSuccessfulSyncAt,
     required this.lastSyncRunState,
+    this.lastSmsRescanAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2022,6 +2050,9 @@ class SyncSettingsRow extends DataClass implements Insertable<SyncSettingsRow> {
         ),
       );
     }
+    if (!nullToAbsent || lastSmsRescanAt != null) {
+      map['last_sms_rescan_at'] = Variable<DateTime>(lastSmsRescanAt);
+    }
     return map;
   }
 
@@ -2044,6 +2075,9 @@ class SyncSettingsRow extends DataClass implements Insertable<SyncSettingsRow> {
           ? const Value.absent()
           : Value(lastSuccessfulSyncAt),
       lastSyncRunState: Value(lastSyncRunState),
+      lastSmsRescanAt: lastSmsRescanAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSmsRescanAt),
     );
   }
 
@@ -2070,6 +2104,7 @@ class SyncSettingsRow extends DataClass implements Insertable<SyncSettingsRow> {
       ),
       lastSyncRunState: $SyncSettingsTableTable.$converterlastSyncRunState
           .fromJson(serializer.fromJson<String>(json['lastSyncRunState'])),
+      lastSmsRescanAt: serializer.fromJson<DateTime?>(json['lastSmsRescanAt']),
     );
   }
   @override
@@ -2097,6 +2132,7 @@ class SyncSettingsRow extends DataClass implements Insertable<SyncSettingsRow> {
           lastSyncRunState,
         ),
       ),
+      'lastSmsRescanAt': serializer.toJson<DateTime?>(lastSmsRescanAt),
     };
   }
 
@@ -2110,6 +2146,7 @@ class SyncSettingsRow extends DataClass implements Insertable<SyncSettingsRow> {
     bool? autoSyncEnabled,
     Value<DateTime?> lastSuccessfulSyncAt = const Value.absent(),
     SyncRunState? lastSyncRunState,
+    Value<DateTime?> lastSmsRescanAt = const Value.absent(),
   }) => SyncSettingsRow(
     id: id ?? this.id,
     syncPreference: syncPreference ?? this.syncPreference,
@@ -2128,6 +2165,9 @@ class SyncSettingsRow extends DataClass implements Insertable<SyncSettingsRow> {
         ? lastSuccessfulSyncAt.value
         : this.lastSuccessfulSyncAt,
     lastSyncRunState: lastSyncRunState ?? this.lastSyncRunState,
+    lastSmsRescanAt: lastSmsRescanAt.present
+        ? lastSmsRescanAt.value
+        : this.lastSmsRescanAt,
   );
   SyncSettingsRow copyWithCompanion(SyncSettingsTableCompanion data) {
     return SyncSettingsRow(
@@ -2156,6 +2196,9 @@ class SyncSettingsRow extends DataClass implements Insertable<SyncSettingsRow> {
       lastSyncRunState: data.lastSyncRunState.present
           ? data.lastSyncRunState.value
           : this.lastSyncRunState,
+      lastSmsRescanAt: data.lastSmsRescanAt.present
+          ? data.lastSmsRescanAt.value
+          : this.lastSmsRescanAt,
     );
   }
 
@@ -2170,7 +2213,8 @@ class SyncSettingsRow extends DataClass implements Insertable<SyncSettingsRow> {
           ..write('spreadsheetName: $spreadsheetName, ')
           ..write('autoSyncEnabled: $autoSyncEnabled, ')
           ..write('lastSuccessfulSyncAt: $lastSuccessfulSyncAt, ')
-          ..write('lastSyncRunState: $lastSyncRunState')
+          ..write('lastSyncRunState: $lastSyncRunState, ')
+          ..write('lastSmsRescanAt: $lastSmsRescanAt')
           ..write(')'))
         .toString();
   }
@@ -2186,6 +2230,7 @@ class SyncSettingsRow extends DataClass implements Insertable<SyncSettingsRow> {
     autoSyncEnabled,
     lastSuccessfulSyncAt,
     lastSyncRunState,
+    lastSmsRescanAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -2199,7 +2244,8 @@ class SyncSettingsRow extends DataClass implements Insertable<SyncSettingsRow> {
           other.spreadsheetName == this.spreadsheetName &&
           other.autoSyncEnabled == this.autoSyncEnabled &&
           other.lastSuccessfulSyncAt == this.lastSuccessfulSyncAt &&
-          other.lastSyncRunState == this.lastSyncRunState);
+          other.lastSyncRunState == this.lastSyncRunState &&
+          other.lastSmsRescanAt == this.lastSmsRescanAt);
 }
 
 class SyncSettingsTableCompanion extends UpdateCompanion<SyncSettingsRow> {
@@ -2212,6 +2258,7 @@ class SyncSettingsTableCompanion extends UpdateCompanion<SyncSettingsRow> {
   final Value<bool> autoSyncEnabled;
   final Value<DateTime?> lastSuccessfulSyncAt;
   final Value<SyncRunState> lastSyncRunState;
+  final Value<DateTime?> lastSmsRescanAt;
   const SyncSettingsTableCompanion({
     this.id = const Value.absent(),
     this.syncPreference = const Value.absent(),
@@ -2222,6 +2269,7 @@ class SyncSettingsTableCompanion extends UpdateCompanion<SyncSettingsRow> {
     this.autoSyncEnabled = const Value.absent(),
     this.lastSuccessfulSyncAt = const Value.absent(),
     this.lastSyncRunState = const Value.absent(),
+    this.lastSmsRescanAt = const Value.absent(),
   });
   SyncSettingsTableCompanion.insert({
     this.id = const Value.absent(),
@@ -2233,6 +2281,7 @@ class SyncSettingsTableCompanion extends UpdateCompanion<SyncSettingsRow> {
     required bool autoSyncEnabled,
     this.lastSuccessfulSyncAt = const Value.absent(),
     required SyncRunState lastSyncRunState,
+    this.lastSmsRescanAt = const Value.absent(),
   }) : syncPreference = Value(syncPreference),
        connectionState = Value(connectionState),
        autoSyncEnabled = Value(autoSyncEnabled),
@@ -2247,6 +2296,7 @@ class SyncSettingsTableCompanion extends UpdateCompanion<SyncSettingsRow> {
     Expression<bool>? autoSyncEnabled,
     Expression<DateTime>? lastSuccessfulSyncAt,
     Expression<String>? lastSyncRunState,
+    Expression<DateTime>? lastSmsRescanAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2260,6 +2310,7 @@ class SyncSettingsTableCompanion extends UpdateCompanion<SyncSettingsRow> {
       if (lastSuccessfulSyncAt != null)
         'last_successful_sync_at': lastSuccessfulSyncAt,
       if (lastSyncRunState != null) 'last_sync_run_state': lastSyncRunState,
+      if (lastSmsRescanAt != null) 'last_sms_rescan_at': lastSmsRescanAt,
     });
   }
 
@@ -2273,6 +2324,7 @@ class SyncSettingsTableCompanion extends UpdateCompanion<SyncSettingsRow> {
     Value<bool>? autoSyncEnabled,
     Value<DateTime?>? lastSuccessfulSyncAt,
     Value<SyncRunState>? lastSyncRunState,
+    Value<DateTime?>? lastSmsRescanAt,
   }) {
     return SyncSettingsTableCompanion(
       id: id ?? this.id,
@@ -2284,6 +2336,7 @@ class SyncSettingsTableCompanion extends UpdateCompanion<SyncSettingsRow> {
       autoSyncEnabled: autoSyncEnabled ?? this.autoSyncEnabled,
       lastSuccessfulSyncAt: lastSuccessfulSyncAt ?? this.lastSuccessfulSyncAt,
       lastSyncRunState: lastSyncRunState ?? this.lastSyncRunState,
+      lastSmsRescanAt: lastSmsRescanAt ?? this.lastSmsRescanAt,
     );
   }
 
@@ -2331,6 +2384,9 @@ class SyncSettingsTableCompanion extends UpdateCompanion<SyncSettingsRow> {
         ),
       );
     }
+    if (lastSmsRescanAt.present) {
+      map['last_sms_rescan_at'] = Variable<DateTime>(lastSmsRescanAt.value);
+    }
     return map;
   }
 
@@ -2345,7 +2401,8 @@ class SyncSettingsTableCompanion extends UpdateCompanion<SyncSettingsRow> {
           ..write('spreadsheetName: $spreadsheetName, ')
           ..write('autoSyncEnabled: $autoSyncEnabled, ')
           ..write('lastSuccessfulSyncAt: $lastSuccessfulSyncAt, ')
-          ..write('lastSyncRunState: $lastSyncRunState')
+          ..write('lastSyncRunState: $lastSyncRunState, ')
+          ..write('lastSmsRescanAt: $lastSmsRescanAt')
           ..write(')'))
         .toString();
   }
@@ -3942,6 +3999,7 @@ typedef $$SyncSettingsTableTableCreateCompanionBuilder =
       required bool autoSyncEnabled,
       Value<DateTime?> lastSuccessfulSyncAt,
       required SyncRunState lastSyncRunState,
+      Value<DateTime?> lastSmsRescanAt,
     });
 typedef $$SyncSettingsTableTableUpdateCompanionBuilder =
     SyncSettingsTableCompanion Function({
@@ -3954,6 +4012,7 @@ typedef $$SyncSettingsTableTableUpdateCompanionBuilder =
       Value<bool> autoSyncEnabled,
       Value<DateTime?> lastSuccessfulSyncAt,
       Value<SyncRunState> lastSyncRunState,
+      Value<DateTime?> lastSmsRescanAt,
     });
 
 class $$SyncSettingsTableTableFilterComposer
@@ -4016,6 +4075,11 @@ class $$SyncSettingsTableTableFilterComposer
     column: $table.lastSyncRunState,
     builder: (column) => ColumnWithTypeConverterFilters(column),
   );
+
+  ColumnFilters<DateTime> get lastSmsRescanAt => $composableBuilder(
+    column: $table.lastSmsRescanAt,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$SyncSettingsTableTableOrderingComposer
@@ -4069,6 +4133,11 @@ class $$SyncSettingsTableTableOrderingComposer
 
   ColumnOrderings<String> get lastSyncRunState => $composableBuilder(
     column: $table.lastSyncRunState,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastSmsRescanAt => $composableBuilder(
+    column: $table.lastSmsRescanAt,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -4127,6 +4196,11 @@ class $$SyncSettingsTableTableAnnotationComposer
         column: $table.lastSyncRunState,
         builder: (column) => column,
       );
+
+  GeneratedColumn<DateTime> get lastSmsRescanAt => $composableBuilder(
+    column: $table.lastSmsRescanAt,
+    builder: (column) => column,
+  );
 }
 
 class $$SyncSettingsTableTableTableManager
@@ -4179,6 +4253,7 @@ class $$SyncSettingsTableTableTableManager
                 Value<bool> autoSyncEnabled = const Value.absent(),
                 Value<DateTime?> lastSuccessfulSyncAt = const Value.absent(),
                 Value<SyncRunState> lastSyncRunState = const Value.absent(),
+                Value<DateTime?> lastSmsRescanAt = const Value.absent(),
               }) => SyncSettingsTableCompanion(
                 id: id,
                 syncPreference: syncPreference,
@@ -4189,6 +4264,7 @@ class $$SyncSettingsTableTableTableManager
                 autoSyncEnabled: autoSyncEnabled,
                 lastSuccessfulSyncAt: lastSuccessfulSyncAt,
                 lastSyncRunState: lastSyncRunState,
+                lastSmsRescanAt: lastSmsRescanAt,
               ),
           createCompanionCallback:
               ({
@@ -4201,6 +4277,7 @@ class $$SyncSettingsTableTableTableManager
                 required bool autoSyncEnabled,
                 Value<DateTime?> lastSuccessfulSyncAt = const Value.absent(),
                 required SyncRunState lastSyncRunState,
+                Value<DateTime?> lastSmsRescanAt = const Value.absent(),
               }) => SyncSettingsTableCompanion.insert(
                 id: id,
                 syncPreference: syncPreference,
@@ -4211,6 +4288,7 @@ class $$SyncSettingsTableTableTableManager
                 autoSyncEnabled: autoSyncEnabled,
                 lastSuccessfulSyncAt: lastSuccessfulSyncAt,
                 lastSyncRunState: lastSyncRunState,
+                lastSmsRescanAt: lastSmsRescanAt,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

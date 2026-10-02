@@ -192,4 +192,27 @@ void main() {
 
     expect(parser.tryParse(event)!.bankName, 'ICICI Bank');
   });
+
+  test('extracts note/remark from SMS with explicit Remark or Note prefix', () {
+    final event = sms(
+      'Rs.200.00 debited from A/c XX1234 to tea@upi Ref No 123456789012. Remark: Evening tea',
+    );
+
+    final result = parser.tryParse(event);
+
+    expect(result, isNotNull);
+    expect(result!.note, 'Evening tea');
+  });
+
+  test('extracts purpose from SMS with for <purpose>', () {
+    final event = sms(
+      'Rs.1200.00 debited from A/c XX1234 on 15-01-24 to Ramesh for Room Rent Ref: 555566667777',
+    );
+
+    final result = parser.tryParse(event);
+
+    expect(result, isNotNull);
+    expect(result!.merchantName, 'Ramesh');
+    expect(result.note, 'Room Rent');
+  });
 }

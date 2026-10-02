@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/transaction_list_providers.dart';
 import '../widgets/filter_bar.dart';
+import '../widgets/month_filter_bar.dart';
 import '../widgets/transaction_tile.dart';
+import 'record_transaction_screen.dart';
 import 'transaction_detail_screen.dart';
 
 class TransactionListScreen extends ConsumerWidget {
@@ -14,15 +16,35 @@ class TransactionListScreen extends ConsumerWidget {
     final transactionsAsync = ref.watch(filteredTransactionsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Transactions')),
+      appBar: AppBar(
+        title: const Text('Transactions'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: 'Record Transaction',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const RecordTransactionScreen()),
+            ),
+          ),
+        ],
+      ),
       body: Column(
         children: [
+          const MonthFilterBar(),
           const FilterBar(),
           const Divider(height: 1),
           Expanded(
             child: transactionsAsync.when(
               data: (transactions) => transactions.isEmpty
-                  ? const Center(child: Text('No transactions match this filter.'))
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text(
+                          'No transactions match this filter.',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    )
                   : ListView.builder(
                       itemCount: transactions.length,
                       itemBuilder: (context, index) {
@@ -30,7 +52,9 @@ class TransactionListScreen extends ConsumerWidget {
                         return TransactionTile(
                           transaction: tx,
                           onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => TransactionDetailScreen(transaction: tx)),
+                            MaterialPageRoute(
+                              builder: (_) => TransactionDetailScreen(transaction: tx),
+                            ),
                           ),
                         );
                       },
@@ -40,6 +64,13 @@ class TransactionListScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const RecordTransactionScreen()),
+        ),
+        icon: const Icon(Icons.add),
+        label: const Text('Record'),
       ),
     );
   }

@@ -13,6 +13,7 @@ class SyncSettings {
     this.spreadsheetId,
     this.spreadsheetName,
     this.lastSuccessfulSyncAt,
+    this.lastSmsRescanAt,
   });
 
   final SyncPreference syncPreference;
@@ -27,6 +28,7 @@ class SyncSettings {
 
   final DateTime? lastSuccessfulSyncAt;
   final SyncRunState lastSyncRunState;
+  final DateTime? lastSmsRescanAt;
 
   bool get isConnected => connectionState == GoogleConnectionState.connected;
 }

@@ -61,6 +61,47 @@ class TransactionDetailScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _editNote(BuildContext context, WidgetRef ref) async {
+    final controller = TextEditingController(text: transaction.note ?? '');
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Note'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'e.g. Dinner, Groceries, Rent',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result != (transaction.note ?? '')) {
+      final updatedNote = result.isEmpty ? null : result;
+      await ref.read(transactionRepositoryProvider).setCategory(
+        transaction.id,
+        transaction.category,
+        updatedNote,
+      );
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDebit = transaction.type == TransactionType.debit;
@@ -129,6 +170,39 @@ class TransactionDetailScreen extends ConsumerWidget {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Note / Remark', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.primary)),
+                        const SizedBox(height: 4),
+                        Text(
+                          transaction.note ?? 'No note added',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontStyle: transaction.note == null ? FontStyle.italic : FontStyle.normal,
+                            color: transaction.note == null ? Theme.of(context).colorScheme.onSurfaceVariant : null,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton(
+                    onPressed: () => _editNote(context, ref),
+                    child: Text(transaction.note == null ? 'Add' : 'Edit'),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
           Card(
             child: Column(
@@ -137,6 +211,7 @@ class TransactionDetailScreen extends ConsumerWidget {
                 if (transaction.merchantName != null)
                   _DetailRow(label: 'Merchant', value: transaction.merchantName!),
                 if (transaction.upiId != null) _DetailRow(label: 'UPI ID', value: transaction.upiId!),
+                if (transaction.note != null) _DetailRow(label: 'Note', value: transaction.note!),
                 if (transaction.bankName != null) _DetailRow(label: 'Bank', value: transaction.bankName!),
                 if (transaction.accountHint != null)
                   _DetailRow(label: 'Account', value: transaction.accountHint!),

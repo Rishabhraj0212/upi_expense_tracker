@@ -62,6 +62,11 @@ class DriftSyncSettingsRepository implements SyncSettingsRepository {
         SyncSettingsTableCompanion(lastSyncRunState: Value(state)),
       );
 
+  @override
+  Future<void> setLastSmsRescanAt(DateTime at) => _write(
+        SyncSettingsTableCompanion(lastSmsRescanAt: Value(at)),
+      );
+
   Future<void> _write(SyncSettingsTableCompanion companion) async {
     await (_db.update(_db.syncSettingsTable)..where((t) => t.id.equals(_rowId))).write(companion);
   }
@@ -75,5 +80,6 @@ class DriftSyncSettingsRepository implements SyncSettingsRepository {
         autoSyncEnabled: row.autoSyncEnabled,
         lastSuccessfulSyncAt: row.lastSuccessfulSyncAt,
         lastSyncRunState: row.lastSyncRunState,
+        lastSmsRescanAt: row.lastSmsRescanAt,
       );
 }

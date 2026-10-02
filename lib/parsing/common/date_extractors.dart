@@ -5,7 +5,9 @@ import 'month_names.dart';
 class DateExtractors {
   DateExtractors._();
 
-  static final RegExp _numericDateRx = RegExp(r'\b(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\b|\b(\d{4}):(\d{1,2}):(\d{1,2})\b');
+  static final RegExp _numericDateRx = RegExp(
+    r'\b(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})\b|\b(\d{4})[-/:](\d{1,2})[-/:](\d{1,2})\b',
+  );
 
   static final RegExp _namedMonthDateRx = RegExp(
     r'\b(\d{1,2})[-\s](jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[-\s](\d{2,4})\b',

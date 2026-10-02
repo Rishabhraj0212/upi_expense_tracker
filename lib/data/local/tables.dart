@@ -79,6 +79,7 @@ class SyncSettingsTable extends Table {
   BoolColumn get autoSyncEnabled => boolean()();
   DateTimeColumn get lastSuccessfulSyncAt => dateTime().nullable()();
   TextColumn get lastSyncRunState => textEnum<SyncRunState>()();
+  DateTimeColumn get lastSmsRescanAt => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

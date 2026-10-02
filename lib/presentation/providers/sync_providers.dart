@@ -10,10 +10,12 @@ import '../../sync/drive_authorization_native_gateway.dart';
 import '../../sync/google_auth_gateway.dart';
 import '../../sync/google_sign_in_auth_gateway.dart';
 import '../../sync/http_sheets_api_client.dart';
+import '../../sync/sheet_import_service.dart';
 import '../../sync/sheets_api_client.dart';
 import '../../sync/spreadsheet_connection_service.dart';
 import '../../sync/transaction_sync_service.dart';
 import 'app_providers.dart';
+
 
 final syncSettingsRepositoryProvider = Provider<SyncSettingsRepository>((ref) {
   return DriftSyncSettingsRepository(ref.watch(appDatabaseProvider));
@@ -78,4 +80,13 @@ final autoSyncControllerProvider = Provider<AutoSyncController>((ref) {
   );
   ref.onDispose(controller.dispose);
   return controller;
+});
+
+final sheetImportServiceProvider = Provider<SheetImportService>((ref) {
+  return SheetImportService(
+    driveAuthorizationGateway: ref.watch(driveAuthorizationGatewayProvider),
+    sheetsApiClient: ref.watch(sheetsApiClientProvider),
+    syncSettingsRepository: ref.watch(syncSettingsRepositoryProvider),
+    transactionRepository: ref.watch(transactionRepositoryProvider),
+  );
 });

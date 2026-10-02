@@ -78,4 +78,41 @@ class TextExtractors {
     if (vpa != null && vpa.toLowerCase().startsWith(trimmed.toLowerCase())) return null;
     return trimmed;
   }
+
+  static final RegExp _explicitNoteRx = RegExp(
+    r'\b(?:note|remark|remarks|reason)\s*[:\-]\s*([^|.\n]+)',
+    caseSensitive: false,
+  );
+
+  static final RegExp _forNoteRx = RegExp(
+    r"\bfor\s+([A-Za-z0-9 &'\-/]{2,35}?)(?=\s+(?:on|via|using|from|with|ref|utr|rrn|call)\b|[|.!(\n]|$)",
+    caseSensitive: false,
+  );
+
+  static final RegExp _ignoreForWording = RegExp(
+    r'^(?:a\s+transaction|your\s+a/?c|further\s+details|help|assistance|queries|security|blocking|details)\b',
+    caseSensitive: false,
+  );
+
+  /// Extracts an optional payment note, purpose, or remark from text
+  /// (e.g. "Note: Dinner", "for groceries", "Remark: rent").
+  static String? extractNote(String text) {
+    final explicit = _explicitNoteRx.firstMatch(text)?.group(1)?.trim();
+    if (explicit != null && explicit.isNotEmpty) {
+      return _cleanNote(explicit);
+    }
+
+    final forMatch = _forNoteRx.firstMatch(text)?.group(1)?.trim();
+    if (forMatch != null && forMatch.isNotEmpty && !_ignoreForWording.hasMatch(forMatch)) {
+      return _cleanNote(forMatch);
+    }
+
+    return null;
+  }
+
+  static String? _cleanNote(String note) {
+    var cleaned = note.replaceAll(RegExp(r'^[":\s(\[]+|["):.\s\]]+$'), '').trim();
+    if (cleaned.length > 50) cleaned = cleaned.substring(0, 50).trim();
+    return cleaned.isEmpty ? null : cleaned;
+  }
 }

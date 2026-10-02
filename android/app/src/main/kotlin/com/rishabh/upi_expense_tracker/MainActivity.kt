@@ -65,6 +65,61 @@ class MainActivity : FlutterActivity() {
                         )
                         result.success(null)
                     }
+                    "getSmsInboxCount" -> {
+                        val sinceMs = call.argument<Number>("sinceMs")?.toLong() ?: 0L
+                        val untilMs = call.argument<Number>("untilMs")?.toLong()
+                            ?: System.currentTimeMillis()
+                        try {
+                            val cursor = contentResolver.query(
+                                android.provider.Telephony.Sms.Inbox.CONTENT_URI,
+                                arrayOf("_id"),
+                                "date >= ? AND date <= ?",
+                                arrayOf(sinceMs.toString(), untilMs.toString()),
+                                null,
+                            )
+                            val count = cursor?.count ?: 0
+                            cursor?.close()
+                            result.success(count)
+                        } catch (e: SecurityException) {
+                            result.error("permission_denied", "SMS permission not granted", null)
+                        } catch (e: Exception) {
+                            result.error("sms_query_failed", e.message, null)
+                        }
+                    }
+                    "readSmsInbox" -> {
+                        val sinceMs = call.argument<Number>("sinceMs")?.toLong() ?: 0L
+                        val untilMs = call.argument<Number>("untilMs")?.toLong()
+                            ?: System.currentTimeMillis()
+                        val offset = call.argument<Number>("offset")?.toInt() ?: 0
+                        val limit = call.argument<Number>("limit")?.toInt() ?: 100
+                        try {
+                            val messages = mutableListOf<Map<String, Any?>>()
+                            val cursor = contentResolver.query(
+                                android.provider.Telephony.Sms.Inbox.CONTENT_URI,
+                                arrayOf("_id", "address", "body", "date"),
+                                "date >= ? AND date <= ?",
+                                arrayOf(sinceMs.toString(), untilMs.toString()),
+                                "date ASC LIMIT $limit OFFSET $offset",
+                            )
+                            cursor?.use {
+                                while (it.moveToNext()) {
+                                    messages.add(
+                                        mapOf(
+                                            "id" to it.getLong(0),
+                                            "address" to (it.getString(1) ?: ""),
+                                            "body" to (it.getString(2) ?: ""),
+                                            "dateMs" to it.getLong(3),
+                                        )
+                                    )
+                                }
+                            }
+                            result.success(messages)
+                        } catch (e: SecurityException) {
+                            result.error("permission_denied", "SMS permission not granted", null)
+                        } catch (e: Exception) {
+                            result.error("sms_query_failed", e.message, null)
+                        }
+                    }
                     else -> result.notImplemented()
                 }
             }

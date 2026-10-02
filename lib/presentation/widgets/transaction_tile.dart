@@ -26,18 +26,35 @@ class TransactionTile extends StatelessWidget {
         children: [
           Text('${transaction.sourceList.join(' + ')} • ${Fmt.dayTime(transaction.occurredAt)}'),
           const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              transaction.category ?? 'Uncategorized',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontStyle: transaction.category == null ? FontStyle.italic : FontStyle.normal,
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  transaction.category ?? 'Uncategorized',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontStyle: transaction.category == null ? FontStyle.italic : FontStyle.normal,
+                  ),
+                ),
               ),
-            ),
+              if (transaction.note != null && transaction.note!.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '• ${transaction.note!}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),

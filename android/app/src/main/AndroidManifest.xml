@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.RECEIVE_SMS"/>
+    <uses-permission android:name="android.permission.READ_SMS"/>
     <!-- Lets the setup screen ask the user to exempt this app from battery
          optimization, so headless background capture (Milestone 8) is less
          likely to be killed early by aggressive OEM power management. -->

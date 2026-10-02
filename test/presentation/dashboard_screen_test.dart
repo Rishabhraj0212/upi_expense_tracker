@@ -50,26 +50,27 @@ void main() {
     await disposeAndFlushDriftTimer(tester);
   });
 
-  testWidgets('shows correct totals and a recent transaction preview', (tester) async {
+  testWidgets('shows correct totals and a recent transaction preview for current month by default', (tester) async {
     final db = newInMemoryTestDatabase();
     addTearDown(db.close);
     final repo = DriftTransactionRepository(db);
+    final now = DateTime.now();
     await repo.insert(_parsed(
       amountPaise: 10000,
       type: TransactionType.debit,
-      occurredAt: DateTime(2026, 1, 1),
+      occurredAt: DateTime(now.year, now.month, 1),
       merchantName: 'Tea Stall',
     ));
     await repo.insert(_parsed(
       amountPaise: 5000,
       type: TransactionType.debit,
-      occurredAt: DateTime(2026, 1, 2),
+      occurredAt: DateTime(now.year, now.month, 2),
       merchantName: 'Coffee Shop',
     ));
     await repo.insert(_parsed(
       amountPaise: 20000,
       type: TransactionType.credit,
-      occurredAt: DateTime(2026, 1, 3),
+      occurredAt: DateTime(now.year, now.month, 3),
       merchantName: 'Employer',
     ));
 
@@ -84,14 +85,54 @@ void main() {
     await disposeAndFlushDriftTimer(tester);
   });
 
+  testWidgets('defaults to current month and toggles to all time', (tester) async {
+    final db = newInMemoryTestDatabase();
+    addTearDown(db.close);
+    final repo = DriftTransactionRepository(db);
+    final now = DateTime.now();
+
+    // Previous year transaction
+    await repo.insert(_parsed(
+      amountPaise: 50000,
+      type: TransactionType.debit,
+      occurredAt: DateTime(now.year - 1, 1, 1),
+      merchantName: 'Old Laptop',
+    ));
+
+    // Current month transaction
+    await repo.insert(_parsed(
+      amountPaise: 10000,
+      type: TransactionType.debit,
+      occurredAt: DateTime(now.year, now.month, 1),
+      merchantName: 'Tea Stall',
+    ));
+
+    await pumpDriftScreen(tester, db, const DashboardScreen());
+
+    // By default, only current month is shown (₹100, not ₹600)
+    expect(find.text('₹100'), findsOneWidget);
+    expect(find.text('Tea Stall'), findsOneWidget);
+    expect(find.text('Old Laptop'), findsNothing);
+
+    // Switch to All Time
+    await tester.tap(find.text('All Time'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('₹600'), findsOneWidget);
+    expect(find.text('Old Laptop'), findsOneWidget);
+
+    await disposeAndFlushDriftTimer(tester);
+  });
+
   testWidgets('"See all" navigates to the transaction list screen', (tester) async {
     final db = newInMemoryTestDatabase();
     addTearDown(db.close);
     final repo = DriftTransactionRepository(db);
+    final now = DateTime.now();
     await repo.insert(_parsed(
       amountPaise: 10000,
       type: TransactionType.debit,
-      occurredAt: DateTime(2026, 1, 1),
+      occurredAt: DateTime(now.year, now.month, 1),
       merchantName: 'Tea Stall',
     ));
 
@@ -109,10 +150,11 @@ void main() {
     final db = newInMemoryTestDatabase();
     addTearDown(db.close);
     final repo = DriftTransactionRepository(db);
+    final now = DateTime.now();
     await repo.insert(_parsed(
       amountPaise: 10000,
       type: TransactionType.debit,
-      occurredAt: DateTime(2026, 1, 1),
+      occurredAt: DateTime(now.year, now.month, 1),
       merchantName: 'Tea Stall',
     ));
 

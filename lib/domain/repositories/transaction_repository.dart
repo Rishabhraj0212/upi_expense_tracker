@@ -20,14 +20,19 @@ class TransactionFilter {
 
   static const none = TransactionFilter();
 
-  /// [clearType]/[clearSearchText]/[clearCategory] let the UI explicitly reset a field back
+  bool get hasActiveFilter =>
+      type != null || from != null || to != null || (searchText != null && searchText!.isNotEmpty) || category != null;
+
+  /// [clearType]/[clearFrom]/[clearTo]/[clearSearchText]/[clearCategory] let the UI explicitly reset a field back
   /// to null, since passing null itself to a named parameter here just means
   /// "keep the current value".
   TransactionFilter copyWith({
     TransactionType? type,
     bool clearType = false,
     DateTime? from,
+    bool clearFrom = false,
     DateTime? to,
+    bool clearTo = false,
     String? searchText,
     bool clearSearchText = false,
     String? category,
@@ -35,8 +40,8 @@ class TransactionFilter {
   }) {
     return TransactionFilter(
       type: clearType ? null : (type ?? this.type),
-      from: from ?? this.from,
-      to: to ?? this.to,
+      from: clearFrom ? null : (from ?? this.from),
+      to: clearTo ? null : (to ?? this.to),
       searchText: clearSearchText ? null : (searchText ?? this.searchText),
       category: clearCategory ? null : (category ?? this.category),
     );
@@ -74,6 +79,11 @@ abstract class TransactionRepository {
   /// Reactive stream that emits whenever matching rows change.
   Stream<List<Transaction>> watchAll({TransactionFilter filter = TransactionFilter.none, int limit = 500});
 
+  Future<int> getTotalAmount(TransactionFilter filter);
+  Future<int> getTransactionCount(TransactionFilter filter);
+  Future<List<MapEntry<String, int>>> getTopCategories(TransactionFilter filter, {int limit = 5});
+  Future<List<MapEntry<String, int>>> getTopMerchants(TransactionFilter filter, {int limit = 5});
+
   /// Updates the user-editable category/note.
   ///
   /// Phase 2 requirement, not yet wired (see [markPending]): category and
@@ -85,6 +95,9 @@ abstract class TransactionRepository {
   Future<void> setCategory(int id, String? category, String? note);
 
   Future<void> delete(int id);
+
+  /// Clears all transactions and raw captures from the database.
+  Future<void> clearAllData();
 
   /// Rows with sync status pending or failed — what a sync run needs to
   /// write/retry. Matching by [Transaction.id] (never [Transaction.remoteRowRef])

@@ -62,14 +62,14 @@ class GenericUpiSmsParser implements TransactionParser {
   static final RegExp _payeeNameRx = RegExp(
     r'\b(?:trf to|transfer(?:red)? to|paid to|sent to|towards|to)\s+'
     r"([A-Za-z][A-Za-z0-9 &.\-']{1,40}?)"
-    r'(?=\s+(?:on|ref|upi|utr|via|from|dt)\b|[.,(]|$)',
+    r'(?=\s+(?:on|ref|upi|utr|via|from|dt|for|note|remark)\b|[.,(]|$)',
     caseSensitive: false,
   );
 
   static final RegExp _payerNameRx = RegExp(
     r'\bfrom\s+'
     r"([A-Za-z][A-Za-z0-9 &.\-']{1,40}?)"
-    r'(?=\s+(?:on|ref|upi|utr|via|dt)\b|[.,(]|$)',
+    r'(?=\s+(?:on|ref|upi|utr|via|dt|for|note|remark)\b|[.,(]|$)',
     caseSensitive: false,
   );
 
@@ -104,6 +104,7 @@ class GenericUpiSmsParser implements TransactionParser {
       referenceId: TextExtractors.extractReferenceId(text),
       sourceAddress: event.origin,
       balancePaise: TextExtractors.extractBalancePaise(text),
+      note: TextExtractors.extractNote(text),
     );
   }
 
