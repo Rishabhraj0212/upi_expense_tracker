@@ -1,0 +1,11 @@
+{
+  "files.exclude": {
+    "**/.kilo": true
+  },
+  "files.watcherExclude": {
+    "**/.kilo/**": true
+  },
+  "search.exclude": {
+    "**/.kilo": true
+  }
+}

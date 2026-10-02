@@ -1,4 +1,8 @@
+# Tool worktrees (Antigravity IDE internal)
+.kilo/
+
 # Miscellaneous
+
 *.class
 *.log
 *.pyc
