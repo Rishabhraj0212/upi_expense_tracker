@@ -29,11 +29,39 @@ void main() async {
   );
 }
 
-class UpiExpenseApp extends ConsumerWidget {
+class UpiExpenseApp extends ConsumerStatefulWidget {
   const UpiExpenseApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<UpiExpenseApp> createState() => _UpiExpenseAppState();
+}
+
+class _UpiExpenseAppState extends ConsumerState<UpiExpenseApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// SMS/notifications captured while the app was backgrounded or closed are
+  /// written by a separate headless engine with its own database connection,
+  /// so Drift's reactive streams here never see those writes. Re-querying on
+  /// resume makes them appear without needing a manual rescan.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    final db = ref.read(appDatabaseProvider);
+    db.markTablesUpdated(db.allTables);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // Reading these once at startup opens the native event subscriptions for
     // the lifetime of the app; nothing in the UI needs their values.
     ref.watch(smsIngestionControllerProvider);

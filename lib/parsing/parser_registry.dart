@@ -2,7 +2,7 @@ import '../domain/models/parsed_transaction.dart';
 import '../domain/models/raw_event.dart';
 import 'notification/generic_upi_notification_parser.dart';
 import 'sms/generic_upi_sms_parser.dart';
-import 'sms/sbi_sms_parser.dart';
+import 'sms/bank_startement_parser.dart';
 import 'transaction_parser.dart';
 
 /// Tries each registered [TransactionParser] in order and returns the first
@@ -12,15 +12,16 @@ import 'transaction_parser.dart';
 /// Adding support for a new bank or app is a one-line addition to
 /// [defaultParsers] plus a new parser class — nothing else changes.
 class ParserRegistry {
-  ParserRegistry({List<TransactionParser>? parsers}) : _parsers = parsers ?? defaultParsers();
+  ParserRegistry({List<TransactionParser>? parsers})
+    : _parsers = parsers ?? defaultParsers();
 
   final List<TransactionParser> _parsers;
 
   static List<TransactionParser> defaultParsers() => [
-        SbiSmsParser(),
-        GenericUpiSmsParser(),
-        GenericUpiNotificationParser(),
-      ];
+    SbiSmsParser(),
+    GenericUpiSmsParser(),
+    GenericUpiNotificationParser(),
+  ];
 
   ParsedTransaction? parse(RawEvent event) {
     for (final parser in _parsers) {

@@ -22,7 +22,7 @@ void main() {
     expect(result, isNotNull);
     expect(result!.bankName, 'State Bank of India');
     expect(result.amountPaise, 50000);
-    expect(result.occurredAt, DateTime(2024, 1, 12));
+    expect(result.occurredAt, DateTime(2024, 1, 12, 10, 30));
   });
 
   test('routes a non-SBI SMS through the generic parser', () {

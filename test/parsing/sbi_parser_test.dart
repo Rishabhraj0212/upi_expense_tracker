@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:upi_expense_tracker/domain/models/raw_event.dart';
 import 'package:upi_expense_tracker/domain/models/transaction_source.dart';
 import 'package:upi_expense_tracker/domain/models/transaction_type.dart';
-import 'package:upi_expense_tracker/parsing/sms/sbi_sms_parser.dart';
+import 'package:upi_expense_tracker/parsing/sms/bank_startement_parser.dart';
 
 void main() {
   final parser = SbiSmsParser();
@@ -32,7 +32,7 @@ void main() {
     expect(result.bankName, 'State Bank of India');
     expect(result.accountHint, 'X1234');
     expect(result.referenceId, '302615478321');
-    expect(result.occurredAt, DateTime(2024, 1, 12));
+    expect(result.occurredAt, DateTime(2024, 1, 12, 10, 30));
   });
 
   test('parses an SBI credit', () {
@@ -46,7 +46,7 @@ void main() {
     expect(result, isNotNull);
     expect(result!.amountPaise, 250000);
     expect(result.type, TransactionType.credit);
-    expect(result.occurredAt, DateTime(2024, 2, 5));
+    expect(result.occurredAt, DateTime(2024, 2, 5, 10, 30));
   });
 
   test('extracts a plain merchant name when no VPA is present', () {

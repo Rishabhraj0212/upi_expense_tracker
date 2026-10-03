@@ -54,7 +54,7 @@ class SbiSmsParser implements TransactionParser {
     return ParsedTransaction(
       amountPaise: (amount * 100).round(),
       type: debitMatch != null ? TransactionType.debit : TransactionType.credit,
-      occurredAt: _extractDate(text) ?? event.receivedAt,
+      occurredAt: _extractDate(text, event.receivedAt) ?? event.receivedAt,
       sourceType: SourceType.sms,
       rawText: event.text,
       merchantName: name,
@@ -68,7 +68,7 @@ class SbiSmsParser implements TransactionParser {
     );
   }
 
-  static DateTime? _extractDate(String text) {
+  static DateTime? _extractDate(String text, DateTime fallback) {
     final m = _dateRx.firstMatch(text);
     if (m == null) return null;
     final day = int.parse(m.group(1)!);
@@ -76,6 +76,8 @@ class SbiSmsParser implements TransactionParser {
     if (month == null) return null;
     var year = int.parse(m.group(3)!);
     if (year < 100) year += 2000;
-    return DateTime(year, month, day);
+    // The SMS carries a date but no time; borrow the time of day it was
+    // received so the row doesn't sort to 00:00 below the day's other items.
+    return DateTime(year, month, day, fallback.hour, fallback.minute, fallback.second);
   }
 }
